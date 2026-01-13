@@ -1,0 +1,11 @@
+datasource db {
+  provider = "mysql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Test {
+  id String @id @default(cuid())
+}

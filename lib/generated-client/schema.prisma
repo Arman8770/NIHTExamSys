@@ -1,0 +1,57 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated-client"
+}
+
+model User {
+  id          String  @id @default(cuid())
+  name        String
+  email       String  @unique
+  password    String
+  phoneNumber BigInt?
+  city        String?
+  role        String  @default("NONE")
+
+  examsCreated Exam[]   @relation("TeacherExams")
+  results      Result[]
+}
+
+model Exam {
+  id          String     @id @default(cuid())
+  title       String
+  description String
+  timeLimit   Int // in minutes
+  teacherId   String
+  teacher     User       @relation("TeacherExams", fields: [teacherId], references: [id])
+  questions   Question[]
+  results     Result[]
+  createdAt   DateTime   @default(now())
+}
+
+model Question {
+  id                 String @id @default(cuid())
+  examId             String
+  exam               Exam   @relation(fields: [examId], references: [id], onDelete: Cascade)
+  text               String
+  options            String // JSON string
+  correctAnswerIndex Int
+}
+
+model Result {
+  id              String   @id @default(cuid())
+  studentId       String
+  student         User     @relation(fields: [studentId], references: [id])
+  examId          String
+  exam            Exam     @relation(fields: [examId], references: [id])
+  score           Int
+  completionTime  Int // Time taken in seconds or minutes
+  teacherApproval Boolean  @default(false)
+  adminApproval   Boolean  @default(false)
+  responses       Json? // Added to store student answers for review
+  createdAt       DateTime @default(now())
+}
