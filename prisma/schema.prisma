@@ -14,10 +14,12 @@ model User {
   password    String
   phoneNumber BigInt?
   city        String?
-  role        String @default("NONE")
+  role          Role      @default(STUDENT)
+  requestedRole String?   // For tracking what role the user signed up for (TEACHER | STUDENT)
 
   examsCreated Exam[]   @relation("TeacherExams")
   results      Result[]
+  assignedExams ExamAssignment[]
 }
 
 model Exam {
@@ -29,7 +31,19 @@ model Exam {
   teacher     User     @relation("TeacherExams", fields: [teacherId], references: [id])
   questions   Question[]
   results     Result[]
+  assignments ExamAssignment[]
   createdAt   DateTime @default(now())
+}
+
+model ExamAssignment {
+  id        String   @id @default(cuid())
+  examId    String
+  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@unique([examId, studentId])
 }
 
 model Question {
@@ -53,4 +67,11 @@ model Result {
   adminApproval   Boolean @default(false)
   responses       Json?    // Added to store student answers for review
   createdAt      DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+  NONE
 }

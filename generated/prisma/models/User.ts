@@ -41,7 +41,8 @@ export type UserMinAggregateOutputType = {
   password: string | null
   phoneNumber: bigint | null
   city: string | null
-  role: string | null
+  role: $Enums.Role | null
+  requestedRole: string | null
 }
 
 export type UserMaxAggregateOutputType = {
@@ -51,7 +52,8 @@ export type UserMaxAggregateOutputType = {
   password: string | null
   phoneNumber: bigint | null
   city: string | null
-  role: string | null
+  role: $Enums.Role | null
+  requestedRole: string | null
 }
 
 export type UserCountAggregateOutputType = {
@@ -62,6 +64,7 @@ export type UserCountAggregateOutputType = {
   phoneNumber: number
   city: number
   role: number
+  requestedRole: number
   _all: number
 }
 
@@ -82,6 +85,7 @@ export type UserMinAggregateInputType = {
   phoneNumber?: true
   city?: true
   role?: true
+  requestedRole?: true
 }
 
 export type UserMaxAggregateInputType = {
@@ -92,6 +96,7 @@ export type UserMaxAggregateInputType = {
   phoneNumber?: true
   city?: true
   role?: true
+  requestedRole?: true
 }
 
 export type UserCountAggregateInputType = {
@@ -102,6 +107,7 @@ export type UserCountAggregateInputType = {
   phoneNumber?: true
   city?: true
   role?: true
+  requestedRole?: true
   _all?: true
 }
 
@@ -198,7 +204,8 @@ export type UserGroupByOutputType = {
   password: string
   phoneNumber: bigint | null
   city: string | null
-  role: string
+  role: $Enums.Role
+  requestedRole: string | null
   _count: UserCountAggregateOutputType | null
   _avg: UserAvgAggregateOutputType | null
   _sum: UserSumAggregateOutputType | null
@@ -231,9 +238,11 @@ export type UserWhereInput = {
   password?: Prisma.StringFilter<"User"> | string
   phoneNumber?: Prisma.BigIntNullableFilter<"User"> | bigint | number | null
   city?: Prisma.StringNullableFilter<"User"> | string | null
-  role?: Prisma.StringFilter<"User"> | string
+  role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
+  requestedRole?: Prisma.StringNullableFilter<"User"> | string | null
   examsCreated?: Prisma.ExamListRelationFilter
   results?: Prisma.ResultListRelationFilter
+  assignedExams?: Prisma.ExamAssignmentListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -244,8 +253,10 @@ export type UserOrderByWithRelationInput = {
   phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   city?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
+  requestedRole?: Prisma.SortOrderInput | Prisma.SortOrder
   examsCreated?: Prisma.ExamOrderByRelationAggregateInput
   results?: Prisma.ResultOrderByRelationAggregateInput
+  assignedExams?: Prisma.ExamAssignmentOrderByRelationAggregateInput
   _relevance?: Prisma.UserOrderByRelevanceInput
 }
 
@@ -259,9 +270,11 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   password?: Prisma.StringFilter<"User"> | string
   phoneNumber?: Prisma.BigIntNullableFilter<"User"> | bigint | number | null
   city?: Prisma.StringNullableFilter<"User"> | string | null
-  role?: Prisma.StringFilter<"User"> | string
+  role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
+  requestedRole?: Prisma.StringNullableFilter<"User"> | string | null
   examsCreated?: Prisma.ExamListRelationFilter
   results?: Prisma.ResultListRelationFilter
+  assignedExams?: Prisma.ExamAssignmentListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -272,6 +285,7 @@ export type UserOrderByWithAggregationInput = {
   phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   city?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
+  requestedRole?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _avg?: Prisma.UserAvgOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
@@ -289,7 +303,8 @@ export type UserScalarWhereWithAggregatesInput = {
   password?: Prisma.StringWithAggregatesFilter<"User"> | string
   phoneNumber?: Prisma.BigIntNullableWithAggregatesFilter<"User"> | bigint | number | null
   city?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
-  role?: Prisma.StringWithAggregatesFilter<"User"> | string
+  role?: Prisma.EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
+  requestedRole?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
 }
 
 export type UserCreateInput = {
@@ -299,9 +314,11 @@ export type UserCreateInput = {
   password: string
   phoneNumber?: bigint | number | null
   city?: string | null
-  role?: string
+  role?: $Enums.Role
+  requestedRole?: string | null
   examsCreated?: Prisma.ExamCreateNestedManyWithoutTeacherInput
   results?: Prisma.ResultCreateNestedManyWithoutStudentInput
+  assignedExams?: Prisma.ExamAssignmentCreateNestedManyWithoutStudentInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -311,9 +328,11 @@ export type UserUncheckedCreateInput = {
   password: string
   phoneNumber?: bigint | number | null
   city?: string | null
-  role?: string
+  role?: $Enums.Role
+  requestedRole?: string | null
   examsCreated?: Prisma.ExamUncheckedCreateNestedManyWithoutTeacherInput
   results?: Prisma.ResultUncheckedCreateNestedManyWithoutStudentInput
+  assignedExams?: Prisma.ExamAssignmentUncheckedCreateNestedManyWithoutStudentInput
 }
 
 export type UserUpdateInput = {
@@ -323,9 +342,11 @@ export type UserUpdateInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  role?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  requestedRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   examsCreated?: Prisma.ExamUpdateManyWithoutTeacherNestedInput
   results?: Prisma.ResultUpdateManyWithoutStudentNestedInput
+  assignedExams?: Prisma.ExamAssignmentUpdateManyWithoutStudentNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -335,9 +356,11 @@ export type UserUncheckedUpdateInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  role?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  requestedRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   examsCreated?: Prisma.ExamUncheckedUpdateManyWithoutTeacherNestedInput
   results?: Prisma.ResultUncheckedUpdateManyWithoutStudentNestedInput
+  assignedExams?: Prisma.ExamAssignmentUncheckedUpdateManyWithoutStudentNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -347,7 +370,8 @@ export type UserCreateManyInput = {
   password: string
   phoneNumber?: bigint | number | null
   city?: string | null
-  role?: string
+  role?: $Enums.Role
+  requestedRole?: string | null
 }
 
 export type UserUpdateManyMutationInput = {
@@ -357,7 +381,8 @@ export type UserUpdateManyMutationInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  role?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  requestedRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type UserUncheckedUpdateManyInput = {
@@ -367,7 +392,8 @@ export type UserUncheckedUpdateManyInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  role?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  requestedRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type UserOrderByRelevanceInput = {
@@ -384,6 +410,7 @@ export type UserCountOrderByAggregateInput = {
   phoneNumber?: Prisma.SortOrder
   city?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  requestedRole?: Prisma.SortOrder
 }
 
 export type UserAvgOrderByAggregateInput = {
@@ -398,6 +425,7 @@ export type UserMaxOrderByAggregateInput = {
   phoneNumber?: Prisma.SortOrder
   city?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  requestedRole?: Prisma.SortOrder
 }
 
 export type UserMinOrderByAggregateInput = {
@@ -408,6 +436,7 @@ export type UserMinOrderByAggregateInput = {
   phoneNumber?: Prisma.SortOrder
   city?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  requestedRole?: Prisma.SortOrder
 }
 
 export type UserSumOrderByAggregateInput = {
@@ -435,6 +464,10 @@ export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
 }
 
+export type EnumRoleFieldUpdateOperationsInput = {
+  set?: $Enums.Role
+}
+
 export type UserCreateNestedOneWithoutExamsCreatedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutExamsCreatedInput, Prisma.UserUncheckedCreateWithoutExamsCreatedInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutExamsCreatedInput
@@ -447,6 +480,20 @@ export type UserUpdateOneRequiredWithoutExamsCreatedNestedInput = {
   upsert?: Prisma.UserUpsertWithoutExamsCreatedInput
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutExamsCreatedInput, Prisma.UserUpdateWithoutExamsCreatedInput>, Prisma.UserUncheckedUpdateWithoutExamsCreatedInput>
+}
+
+export type UserCreateNestedOneWithoutAssignedExamsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAssignedExamsInput, Prisma.UserUncheckedCreateWithoutAssignedExamsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAssignedExamsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutAssignedExamsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAssignedExamsInput, Prisma.UserUncheckedCreateWithoutAssignedExamsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAssignedExamsInput
+  upsert?: Prisma.UserUpsertWithoutAssignedExamsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAssignedExamsInput, Prisma.UserUpdateWithoutAssignedExamsInput>, Prisma.UserUncheckedUpdateWithoutAssignedExamsInput>
 }
 
 export type UserCreateNestedOneWithoutResultsInput = {
@@ -470,8 +517,10 @@ export type UserCreateWithoutExamsCreatedInput = {
   password: string
   phoneNumber?: bigint | number | null
   city?: string | null
-  role?: string
+  role?: $Enums.Role
+  requestedRole?: string | null
   results?: Prisma.ResultCreateNestedManyWithoutStudentInput
+  assignedExams?: Prisma.ExamAssignmentCreateNestedManyWithoutStudentInput
 }
 
 export type UserUncheckedCreateWithoutExamsCreatedInput = {
@@ -481,8 +530,10 @@ export type UserUncheckedCreateWithoutExamsCreatedInput = {
   password: string
   phoneNumber?: bigint | number | null
   city?: string | null
-  role?: string
+  role?: $Enums.Role
+  requestedRole?: string | null
   results?: Prisma.ResultUncheckedCreateNestedManyWithoutStudentInput
+  assignedExams?: Prisma.ExamAssignmentUncheckedCreateNestedManyWithoutStudentInput
 }
 
 export type UserCreateOrConnectWithoutExamsCreatedInput = {
@@ -508,8 +559,10 @@ export type UserUpdateWithoutExamsCreatedInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  role?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  requestedRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   results?: Prisma.ResultUpdateManyWithoutStudentNestedInput
+  assignedExams?: Prisma.ExamAssignmentUpdateManyWithoutStudentNestedInput
 }
 
 export type UserUncheckedUpdateWithoutExamsCreatedInput = {
@@ -519,7 +572,77 @@ export type UserUncheckedUpdateWithoutExamsCreatedInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  role?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  requestedRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  results?: Prisma.ResultUncheckedUpdateManyWithoutStudentNestedInput
+  assignedExams?: Prisma.ExamAssignmentUncheckedUpdateManyWithoutStudentNestedInput
+}
+
+export type UserCreateWithoutAssignedExamsInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  phoneNumber?: bigint | number | null
+  city?: string | null
+  role?: $Enums.Role
+  requestedRole?: string | null
+  examsCreated?: Prisma.ExamCreateNestedManyWithoutTeacherInput
+  results?: Prisma.ResultCreateNestedManyWithoutStudentInput
+}
+
+export type UserUncheckedCreateWithoutAssignedExamsInput = {
+  id?: string
+  name: string
+  email: string
+  password: string
+  phoneNumber?: bigint | number | null
+  city?: string | null
+  role?: $Enums.Role
+  requestedRole?: string | null
+  examsCreated?: Prisma.ExamUncheckedCreateNestedManyWithoutTeacherInput
+  results?: Prisma.ResultUncheckedCreateNestedManyWithoutStudentInput
+}
+
+export type UserCreateOrConnectWithoutAssignedExamsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutAssignedExamsInput, Prisma.UserUncheckedCreateWithoutAssignedExamsInput>
+}
+
+export type UserUpsertWithoutAssignedExamsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutAssignedExamsInput, Prisma.UserUncheckedUpdateWithoutAssignedExamsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutAssignedExamsInput, Prisma.UserUncheckedCreateWithoutAssignedExamsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutAssignedExamsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutAssignedExamsInput, Prisma.UserUncheckedUpdateWithoutAssignedExamsInput>
+}
+
+export type UserUpdateWithoutAssignedExamsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  requestedRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  examsCreated?: Prisma.ExamUpdateManyWithoutTeacherNestedInput
+  results?: Prisma.ResultUpdateManyWithoutStudentNestedInput
+}
+
+export type UserUncheckedUpdateWithoutAssignedExamsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  requestedRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  examsCreated?: Prisma.ExamUncheckedUpdateManyWithoutTeacherNestedInput
   results?: Prisma.ResultUncheckedUpdateManyWithoutStudentNestedInput
 }
 
@@ -530,8 +653,10 @@ export type UserCreateWithoutResultsInput = {
   password: string
   phoneNumber?: bigint | number | null
   city?: string | null
-  role?: string
+  role?: $Enums.Role
+  requestedRole?: string | null
   examsCreated?: Prisma.ExamCreateNestedManyWithoutTeacherInput
+  assignedExams?: Prisma.ExamAssignmentCreateNestedManyWithoutStudentInput
 }
 
 export type UserUncheckedCreateWithoutResultsInput = {
@@ -541,8 +666,10 @@ export type UserUncheckedCreateWithoutResultsInput = {
   password: string
   phoneNumber?: bigint | number | null
   city?: string | null
-  role?: string
+  role?: $Enums.Role
+  requestedRole?: string | null
   examsCreated?: Prisma.ExamUncheckedCreateNestedManyWithoutTeacherInput
+  assignedExams?: Prisma.ExamAssignmentUncheckedCreateNestedManyWithoutStudentInput
 }
 
 export type UserCreateOrConnectWithoutResultsInput = {
@@ -568,8 +695,10 @@ export type UserUpdateWithoutResultsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  role?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  requestedRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   examsCreated?: Prisma.ExamUpdateManyWithoutTeacherNestedInput
+  assignedExams?: Prisma.ExamAssignmentUpdateManyWithoutStudentNestedInput
 }
 
 export type UserUncheckedUpdateWithoutResultsInput = {
@@ -579,8 +708,10 @@ export type UserUncheckedUpdateWithoutResultsInput = {
   password?: Prisma.StringFieldUpdateOperationsInput | string
   phoneNumber?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  role?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  requestedRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   examsCreated?: Prisma.ExamUncheckedUpdateManyWithoutTeacherNestedInput
+  assignedExams?: Prisma.ExamAssignmentUncheckedUpdateManyWithoutStudentNestedInput
 }
 
 
@@ -591,11 +722,13 @@ export type UserUncheckedUpdateWithoutResultsInput = {
 export type UserCountOutputType = {
   examsCreated: number
   results: number
+  assignedExams: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   examsCreated?: boolean | UserCountOutputTypeCountExamsCreatedArgs
   results?: boolean | UserCountOutputTypeCountResultsArgs
+  assignedExams?: boolean | UserCountOutputTypeCountAssignedExamsArgs
 }
 
 /**
@@ -622,6 +755,13 @@ export type UserCountOutputTypeCountResultsArgs<ExtArgs extends runtime.Types.Ex
   where?: Prisma.ResultWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountAssignedExamsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ExamAssignmentWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -631,8 +771,10 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   phoneNumber?: boolean
   city?: boolean
   role?: boolean
+  requestedRole?: boolean
   examsCreated?: boolean | Prisma.User$examsCreatedArgs<ExtArgs>
   results?: boolean | Prisma.User$resultsArgs<ExtArgs>
+  assignedExams?: boolean | Prisma.User$assignedExamsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -646,12 +788,14 @@ export type UserSelectScalar = {
   phoneNumber?: boolean
   city?: boolean
   role?: boolean
+  requestedRole?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "password" | "phoneNumber" | "city" | "role", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "password" | "phoneNumber" | "city" | "role" | "requestedRole", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   examsCreated?: boolean | Prisma.User$examsCreatedArgs<ExtArgs>
   results?: boolean | Prisma.User$resultsArgs<ExtArgs>
+  assignedExams?: boolean | Prisma.User$assignedExamsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 
@@ -660,6 +804,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     examsCreated: Prisma.$ExamPayload<ExtArgs>[]
     results: Prisma.$ResultPayload<ExtArgs>[]
+    assignedExams: Prisma.$ExamAssignmentPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -668,7 +813,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     password: string
     phoneNumber: bigint | null
     city: string | null
-    role: string
+    role: $Enums.Role
+    requestedRole: string | null
   }, ExtArgs["result"]["user"]>
   composites: {}
 }
@@ -1011,6 +1157,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   examsCreated<T extends Prisma.User$examsCreatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$examsCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExamPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   results<T extends Prisma.User$resultsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$resultsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ResultPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  assignedExams<T extends Prisma.User$assignedExamsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$assignedExamsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExamAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1046,7 +1193,8 @@ export interface UserFieldRefs {
   readonly password: Prisma.FieldRef<"User", 'String'>
   readonly phoneNumber: Prisma.FieldRef<"User", 'BigInt'>
   readonly city: Prisma.FieldRef<"User", 'String'>
-  readonly role: Prisma.FieldRef<"User", 'String'>
+  readonly role: Prisma.FieldRef<"User", 'Role'>
+  readonly requestedRole: Prisma.FieldRef<"User", 'String'>
 }
     
 
@@ -1435,6 +1583,30 @@ export type User$resultsArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
   take?: number
   skip?: number
   distinct?: Prisma.ResultScalarFieldEnum | Prisma.ResultScalarFieldEnum[]
+}
+
+/**
+ * User.assignedExams
+ */
+export type User$assignedExamsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ExamAssignment
+   */
+  select?: Prisma.ExamAssignmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ExamAssignment
+   */
+  omit?: Prisma.ExamAssignmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ExamAssignmentInclude<ExtArgs> | null
+  where?: Prisma.ExamAssignmentWhereInput
+  orderBy?: Prisma.ExamAssignmentOrderByWithRelationInput | Prisma.ExamAssignmentOrderByWithRelationInput[]
+  cursor?: Prisma.ExamAssignmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ExamAssignmentScalarFieldEnum | Prisma.ExamAssignmentScalarFieldEnum[]
 }
 
 /**

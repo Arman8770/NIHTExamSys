@@ -386,6 +386,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   User: 'User',
   Exam: 'Exam',
+  ExamAssignment: 'ExamAssignment',
   Question: 'Question',
   Result: 'Result'
 } as const
@@ -403,7 +404,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "exam" | "question" | "result"
+    modelProps: "user" | "exam" | "examAssignment" | "question" | "result"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -536,6 +537,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ExamCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ExamCountAggregateOutputType> | number
+        }
+      }
+    }
+    ExamAssignment: {
+      payload: Prisma.$ExamAssignmentPayload<ExtArgs>
+      fields: Prisma.ExamAssignmentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ExamAssignmentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamAssignmentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ExamAssignmentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamAssignmentPayload>
+        }
+        findFirst: {
+          args: Prisma.ExamAssignmentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamAssignmentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ExamAssignmentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamAssignmentPayload>
+        }
+        findMany: {
+          args: Prisma.ExamAssignmentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamAssignmentPayload>[]
+        }
+        create: {
+          args: Prisma.ExamAssignmentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamAssignmentPayload>
+        }
+        createMany: {
+          args: Prisma.ExamAssignmentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.ExamAssignmentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamAssignmentPayload>
+        }
+        update: {
+          args: Prisma.ExamAssignmentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamAssignmentPayload>
+        }
+        deleteMany: {
+          args: Prisma.ExamAssignmentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ExamAssignmentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.ExamAssignmentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamAssignmentPayload>
+        }
+        aggregate: {
+          args: Prisma.ExamAssignmentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateExamAssignment>
+        }
+        groupBy: {
+          args: Prisma.ExamAssignmentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExamAssignmentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ExamAssignmentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExamAssignmentCountAggregateOutputType> | number
         }
       }
     }
@@ -717,7 +784,8 @@ export const UserScalarFieldEnum = {
   password: 'password',
   phoneNumber: 'phoneNumber',
   city: 'city',
-  role: 'role'
+  role: 'role',
+  requestedRole: 'requestedRole'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -733,6 +801,16 @@ export const ExamScalarFieldEnum = {
 } as const
 
 export type ExamScalarFieldEnum = (typeof ExamScalarFieldEnum)[keyof typeof ExamScalarFieldEnum]
+
+
+export const ExamAssignmentScalarFieldEnum = {
+  id: 'id',
+  examId: 'examId',
+  studentId: 'studentId',
+  assignedAt: 'assignedAt'
+} as const
+
+export type ExamAssignmentScalarFieldEnum = (typeof ExamAssignmentScalarFieldEnum)[keyof typeof ExamAssignmentScalarFieldEnum]
 
 
 export const QuestionScalarFieldEnum = {
@@ -791,7 +869,7 @@ export const UserOrderByRelevanceFieldEnum = {
   email: 'email',
   password: 'password',
   city: 'city',
-  role: 'role'
+  requestedRole: 'requestedRole'
 } as const
 
 export type UserOrderByRelevanceFieldEnum = (typeof UserOrderByRelevanceFieldEnum)[keyof typeof UserOrderByRelevanceFieldEnum]
@@ -805,6 +883,15 @@ export const ExamOrderByRelevanceFieldEnum = {
 } as const
 
 export type ExamOrderByRelevanceFieldEnum = (typeof ExamOrderByRelevanceFieldEnum)[keyof typeof ExamOrderByRelevanceFieldEnum]
+
+
+export const ExamAssignmentOrderByRelevanceFieldEnum = {
+  id: 'id',
+  examId: 'examId',
+  studentId: 'studentId'
+} as const
+
+export type ExamAssignmentOrderByRelevanceFieldEnum = (typeof ExamAssignmentOrderByRelevanceFieldEnum)[keyof typeof ExamAssignmentOrderByRelevanceFieldEnum]
 
 
 export const QuestionOrderByRelevanceFieldEnum = {
@@ -860,6 +947,13 @@ export type StringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 
  * Reference to a field of type 'BigInt'
  */
 export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
+    
+
+
+/**
+ * Reference to a field of type 'Role'
+ */
+export type EnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Role'>
     
 
 
@@ -1001,6 +1095,7 @@ export type PrismaClientOptions = ({
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   exam?: Prisma.ExamOmit
+  examAssignment?: Prisma.ExamAssignmentOmit
   question?: Prisma.QuestionOmit
   result?: Prisma.ResultOmit
 }

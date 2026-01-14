@@ -52,7 +52,7 @@ export default async function TeacherPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{totalExams}</div>
-                        <p className="text-xs text-muted-foreground">Created by you</p>
+                        <p className="text-xs text-muted-foreground">Exams created</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -61,55 +61,34 @@ export default async function TeacherPage() {
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">--</div>
-                        <p className="text-xs text-muted-foreground">Across all exams</p>
+                        <div className="text-2xl font-bold">{totalStudents}</div>
+                        <p className="text-xs text-muted-foreground">Unique students participated</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
+                        <CardTitle className="text-sm font-medium">Active Now</CardTitle>
                         <Clock className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">Active</div>
-                        <p className="text-xs text-muted-foreground">Session in progress</p>
+                        <div className="text-2xl font-bold">--</div>
+                        <p className="text-xs text-muted-foreground">Live sessions</p>
                     </CardContent>
                 </Card>
             </div>
 
             <div className="grid gap-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Your Exams</CardTitle>
-                        <CardDescription>A list of exams you have created.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {exams.length === 0 ? (
-                            <div className="text-center py-8 text-muted-foreground">
-                                No exams created yet. Click "Create New Exam" to get started.
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {exams.map((exam) => (
-                                    <div key={exam.id} className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-muted/50 transition-colors">
-                                        <div className="space-y-1">
-                                            <h3 className="font-semibold">{exam.title}</h3>
-                                            <p className="text-sm text-muted-foreground line-clamp-1">{exam.description}</p>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-sm text-muted-foreground">
-                                                {exam.timeLimit} mins
-                                            </div>
-                                            <Link href={`/teacher/exam/${exam.id}`}>
-                                                <Button variant="outline" size="sm">
-                                                    Manage
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                <Card className="bg-gradient-to-r from-primary/5 to-transparent border-none">
+                    <CardContent className="flex flex-col md:flex-row items-center justify-between p-6 gap-4">
+                        <div>
+                            <h3 className="text-lg font-semibold">Jump into Exam Management</h3>
+                            <p className="text-sm text-muted-foreground">Create new exams, edit existing ones, or view detailed reports.</p>
+                        </div>
+                        <Link href="/teacher/exams">
+                            <Button size="lg">
+                                Go to Exams
+                            </Button>
+                        </Link>
                     </CardContent>
                 </Card>
             </div>

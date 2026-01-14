@@ -197,13 +197,11 @@ export function ExamInterface({ examId, title, timeLimitMinutes, questions }: Ex
                     >
                         {currentQuestion.options.map((opt, oIndex) => (
                             <div key={oIndex} className={cn(
-                                "flex items-center space-x-3 space-y-0 rounded-lg border p-4 transition-colors hover:bg-muted/50 cursor-pointer",
+                                "flex items-center space-x-3 space-y-0 rounded-lg border p-4 transition-colors hover:bg-muted/50",
                                 answers[currentQuestion.id] === oIndex && "bg-primary/5 border-primary"
-                            )}
-                                onClick={() => setAnswers(prev => ({ ...prev, [currentQuestion.id]: oIndex }))}
-                            >
+                            )}>
                                 <RadioGroupItem value={oIndex.toString()} id={`${currentQuestion.id}-${oIndex}`} />
-                                <Label htmlFor={`${currentQuestion.id}-${oIndex}`} className="flex-1 cursor-pointer font-normal text-base">
+                                <Label htmlFor={`${currentQuestion.id}-${oIndex}`} className="flex-1 cursor-pointer font-normal text-base py-1">
                                     {opt}
                                 </Label>
                             </div>
@@ -244,7 +242,7 @@ export function ExamInterface({ examId, title, timeLimitMinutes, questions }: Ex
                             key={idx}
                             onClick={() => setCurrentQuestionIndex(idx)}
                             className={cn(
-                                "w-10 h-10 rounded-md text-sm font-medium transition-colors border",
+                                "w-10 h-10 rounded-md text-sm font-medium transition-colors border cursor-pointer",
                                 currentQuestionIndex === idx ? "bg-primary text-primary-foreground border-primary" :
                                     answers[questions[idx].id] !== undefined ? "bg-muted text-muted-foreground border-transparent" : "bg-background text-muted-foreground hover:bg-muted"
                             )}

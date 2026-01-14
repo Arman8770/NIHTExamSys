@@ -10,6 +10,7 @@
  */
 export type * from './models/User'
 export type * from './models/Exam'
+export type * from './models/ExamAssignment'
 export type * from './models/Question'
 export type * from './models/Result'
 export type * from './commonInputTypes'

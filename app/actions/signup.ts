@@ -10,6 +10,7 @@ const SignupSchema = z.object({
     password: z.string().min(6, "Password must be at least 6 characters"),
     phoneNumber: z.string().regex(/^\d+$/, "Phone number must contain only digits").min(10, "Phone number must be at least 10 digits"),
     city: z.string().min(2, "City is required"),
+    requestedRole: z.enum(["STUDENT", "TEACHER"]).optional(),
 })
 
 export async function signup(formData: FormData) {
@@ -19,13 +20,14 @@ export async function signup(formData: FormData) {
         password: formData.get("password"),
         phoneNumber: formData.get("phoneNumber"),
         city: formData.get("city"),
+        requestedRole: formData.get("requestedRole"),
     })
 
     if (!validatedFields.success) {
         return { error: validatedFields.error.flatten().fieldErrors }
     }
 
-    const { name, email, password, phoneNumber, city } = validatedFields.data
+    const { name, email, password, phoneNumber, city, requestedRole } = validatedFields.data
 
     try {
         const existingUser = await db.user.findUnique({
@@ -46,6 +48,7 @@ export async function signup(formData: FormData) {
                 phoneNumber: phoneNumber ? BigInt(phoneNumber) : null,
                 city,
                 role: "NONE",
+                requestedRole: requestedRole || "STUDENT",
             },
         })
 

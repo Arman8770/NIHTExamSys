@@ -63,7 +63,7 @@ export function Sidebar({ className, user }: SidebarProps) {
         {
             label: "Manage Exams",
             icon: BookOpen,
-            href: "/teacher", // Both can use this for now as teacher dashboard lists exams
+            href: "/teacher/exams",
             role: "TEACHER"
         },
         {
@@ -76,6 +76,12 @@ export function Sidebar({ className, user }: SidebarProps) {
             label: "My Results",
             icon: Award,
             href: "/student/results", // Needs specific logic or general list
+            role: "STUDENT"
+        },
+        {
+            label: "Certificates",
+            icon: ShieldCheck,
+            href: "/student/certificates",
             role: "STUDENT"
         },
         {
@@ -102,7 +108,7 @@ export function Sidebar({ className, user }: SidebarProps) {
                 <div className="space-y-1">
                     {filteredRoutes.map((route) => (
                         <Link
-                            key={route.href}
+                            key={route.label}
                             href={route.href}
                             onClick={() => setOpen(false)}
                             className={cn(

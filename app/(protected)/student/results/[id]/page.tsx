@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { CertificateView } from "@/components/CertificateView"
 
-export default async function ExamResultPage({ params }: { params: { id: string } }) {
+export default async function ExamResultPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await auth()
     if (!session || (session.user.role !== "STUDENT" && session.user.role !== "ADMIN")) redirect("/")
 
@@ -30,7 +30,8 @@ export default async function ExamResultPage({ params }: { params: { id: string 
 
     if (!result) redirect("/student")
 
-    const percentage = Math.round((result.score / result.exam.questions.length) * 100)
+    const cgpa = result.exam.questions.length > 0 ? (result.score / result.exam.questions.length) * 10 : 0
+    const percentage = result.exam.questions.length > 0 ? Math.round((result.score / result.exam.questions.length) * 100) : 0
 
     // Determine visuals based on score
     let gradeColor = "text-destructive"
@@ -38,12 +39,12 @@ export default async function ExamResultPage({ params }: { params: { id: string 
     let message = "Keep Pushing!"
     let subMessage = "Review the material and try again to improve your score."
 
-    if (percentage >= 80) {
+    if (cgpa >= 8) {
         gradeColor = "text-emerald-500"
         ringColor = "stroke-emerald-500"
         message = "Outstanding Performance!"
         subMessage = "You've mastered this topic perfectly. Keep up the great work!"
-    } else if (percentage >= 60) {
+    } else if (cgpa >= 6) {
         gradeColor = "text-amber-500"
         ringColor = "stroke-amber-500"
         message = "Good Job!"
@@ -56,7 +57,7 @@ export default async function ExamResultPage({ params }: { params: { id: string 
     const strokeDashoffset = circumference - (percentage / 100) * circumference
 
     return (
-        <div className="container max-w-3xl mx-auto py-12 px-4 animate-in fade-in-50 duration-700">
+        <div className="container max-w-6xl mx-auto py-12 px-4 animate-in fade-in-50 duration-700">
             <Link href="/student" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary mb-8 transition-colors group">
                 <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
                 Back to Dashboard
@@ -66,7 +67,7 @@ export default async function ExamResultPage({ params }: { params: { id: string 
                 {/* Header Decoration */}
                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-primary to-indigo-600" />
 
-                {percentage >= 80 && (
+                {cgpa >= 8 && (
                     <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
                         <Trophy className="h-64 w-64 text-yellow-500 rotate-12" />
                     </div>
@@ -100,10 +101,10 @@ export default async function ExamResultPage({ params }: { params: { id: string 
                                 />
                             </svg>
                             <div className="absolute flex flex-col items-center">
-                                <span className={`text-5xl font-black ${gradeColor} tracking-tighter`}>
-                                    {percentage}%
+                                <span className={`text-4xl font-black ${gradeColor} tracking-tighter`}>
+                                    {cgpa.toFixed(1)}
                                 </span>
-                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1">Score</span>
+                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1">CGPA</span>
                             </div>
                         </div>
 
@@ -152,14 +153,21 @@ export default async function ExamResultPage({ params }: { params: { id: string 
 
                     {/* @ts-ignore: Schema fields pending migration */}
                     {result.teacherApproval && result.adminApproval && (
-                        <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
-                            <CertificateView
-                                studentName={session.user.name || "Student"}
-                                examTitle={result.exam.title}
-                                score={result.score}
-                                totalQuestions={result.exam.questions.length}
-                                date={result.createdAt}
-                            />
+                        <div className="mt-8 p-6 bg-emerald-50/50 border border-emerald-100 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-emerald-100 rounded-full">
+                                    <Trophy className="h-6 w-6 text-emerald-600" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-lg text-emerald-900">Certificate Available!</h3>
+                                    <p className="text-emerald-700">Your certificate for this exam is ready to download.</p>
+                                </div>
+                            </div>
+                            <Link href={`/student/certificates/${result.id}`}>
+                                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20 shadow-lg">
+                                    View & Download Certificate
+                                </Button>
+                            </Link>
                         </div>
                     )}
 

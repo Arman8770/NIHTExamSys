@@ -28,6 +28,11 @@ export type User = Prisma.UserModel
  */
 export type Exam = Prisma.ExamModel
 /**
+ * Model ExamAssignment
+ * 
+ */
+export type ExamAssignment = Prisma.ExamAssignmentModel
+/**
  * Model Question
  * 
  */

@@ -110,9 +110,18 @@ export async function getExams() {
             }
         }
 
-        // If not admin, only show teacher's own exams
-        if (session.user.role !== "ADMIN") {
+        // If not admin, logic depends on role
+        if (session.user.role === "TEACHER") {
             query.where = { teacherId: session.user.id }
+        } else if (session.user.role === "STUDENT") {
+            // Only show assigned exams
+            query.where = {
+                assignments: {
+                    some: {
+                        studentId: session.user.id
+                    }
+                }
+            }
         }
 
         const exams = await prisma.exam.findMany(query)
@@ -120,6 +129,89 @@ export async function getExams() {
     } catch (error) {
         console.error("Failed to fetch exams:", error)
         return { error: "Failed to fetch exams" }
+    }
+}
+
+export async function getAllStudents() {
+    const session = await auth()
+    if (!session?.user?.id || (session.user.role !== "TEACHER" && session.user.role !== "ADMIN")) {
+        return { error: "Unauthorized" }
+    }
+
+    try {
+        const students = await prisma.user.findMany({
+            where: { role: "STUDENT" },
+            select: { id: true, name: true, email: true }
+        })
+        return { students }
+    } catch (error) {
+        return { error: "Failed to fetch students" }
+    }
+}
+
+export async function assignExamToStudents(examId: string, studentIds: string[]) {
+    const session = await auth()
+    if (!session?.user?.id || (session.user.role !== "TEACHER" && session.user.role !== "ADMIN")) {
+        return { error: "Unauthorized" }
+    }
+
+    try {
+        // We need to manage the assignments.
+        // Strategy: First delete all existing assignments for this exam that are NOT in the new list?
+        // OR just upsert?
+        // The modal likely sends the FULL list of selected students.
+        // So we should sync.
+
+        // 1. Get current assignments
+        const currentAssignments = await prisma.examAssignment.findMany({
+            where: { examId },
+            select: { studentId: true }
+        })
+        const currentIds = currentAssignments.map(a => a.studentId)
+
+        // 2. Determine to add and remove
+        const toAdd = studentIds.filter(id => !currentIds.includes(id))
+        const toRemove = currentIds.filter(id => !studentIds.includes(id))
+
+        // 3. Execute
+        if (toRemove.length > 0) {
+            await prisma.examAssignment.deleteMany({
+                where: {
+                    examId,
+                    studentId: { in: toRemove }
+                }
+            })
+        }
+
+        if (toAdd.length > 0) {
+            await prisma.examAssignment.createMany({
+                data: toAdd.map(studentId => ({
+                    examId,
+                    studentId
+                }))
+            })
+        }
+
+        revalidatePath("/teacher")
+        return { success: true }
+    } catch (error) {
+        console.error("Assign error", error)
+        return { error: "Failed to assign students" }
+    }
+}
+
+export async function getExamAssignments(examId: string) {
+    const session = await auth()
+    if (!session?.user?.id) return { error: "Unauthorized" }
+
+    try {
+        const assignments = await prisma.examAssignment.findMany({
+            where: { examId },
+            select: { studentId: true }
+        })
+        return { assignedIds: assignments.map(a => a.studentId) }
+    } catch (error) {
+        return { error: "Failed to fetch assignments" }
     }
 }
 
@@ -170,6 +262,81 @@ export async function bulkUploadQuestions(csvData: string) {
     }
 }
 
+export async function updateExam(examId: string, data: {
+    title: string,
+    description: string,
+    timeLimit: number,
+    questions: { id?: string, text: string, options: string[], correctAnswerIndex: number }[]
+}) {
+    const session = await auth()
+    if (!session?.user?.id) return { error: "Not authenticated" }
+
+    try {
+        const exam = await prisma.exam.findUnique({
+            where: { id: examId },
+            include: { questions: true }
+        })
+
+        if (!exam) return { error: "Exam not found" }
+        if (exam.teacherId !== session.user.id && session.user.role !== "ADMIN") return { error: "Unauthorized" }
+
+        // 1. Update Exam Details
+        await prisma.exam.update({
+            where: { id: examId },
+            data: {
+                title: data.title,
+                description: data.description,
+                timeLimit: data.timeLimit,
+            }
+        })
+
+        // 2. Handle Questions Sync
+        const currentQuestionIds = exam.questions.map(q => q.id)
+        const incomingQuestionIds = data.questions.filter(q => q.id).map(q => q.id as string)
+
+        // Delete removed questions
+        const questionsToDelete = currentQuestionIds.filter(id => !incomingQuestionIds.includes(id))
+        if (questionsToDelete.length > 0) {
+            await prisma.question.deleteMany({
+                where: { id: { in: questionsToDelete } }
+            })
+        }
+
+        // Upsert (Update existing or Create new)
+        for (const q of data.questions) {
+            if (q.id && currentQuestionIds.includes(q.id)) {
+                // Update
+                await prisma.question.update({
+                    where: { id: q.id },
+                    data: {
+                        text: q.text,
+                        options: JSON.stringify(q.options),
+                        correctAnswerIndex: q.correctAnswerIndex
+                    }
+                })
+            } else {
+                // Create
+                await prisma.question.create({
+                    data: {
+                        examId: examId,
+                        text: q.text,
+                        options: JSON.stringify(q.options),
+                        correctAnswerIndex: q.correctAnswerIndex
+                    }
+                })
+            }
+        }
+
+        revalidatePath("/teacher")
+        revalidatePath(`/teacher/exam/${examId}`)
+        return { success: true }
+
+    } catch (error: any) {
+        console.error("Failed to update exam:", error)
+        return { error: error.message || "Failed to update exam" }
+    }
+}
+
 export async function approveResult(resultId: string) {
     const session = await auth()
     if (!session?.user?.id) return { error: "Not authenticated" }
@@ -199,8 +366,36 @@ export async function approveResult(resultId: string) {
         return { error: "Unauthorized" }
     }
 
-    revalidatePath("/dashboard")
-    revalidatePath("/teacher")
     revalidatePath("/admin")
     return { success: true }
+}
+
+export async function getStudentCertificates() {
+    const session = await auth()
+    if (!session?.user?.id) return { error: "Not authenticated" }
+
+    try {
+        const results = await prisma.result.findMany({
+            where: {
+                studentId: session.user.id,
+            },
+            include: {
+                exam: {
+                    select: {
+                        title: true,
+                        _count: { select: { questions: true } }
+                    }
+                },
+                student: {
+                    select: { name: true }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        })
+
+        return { certificates: results }
+    } catch (error) {
+        console.error("Failed to fetch certificates:", error)
+        return { error: "Failed to fetch certificates" }
+    }
 }

@@ -15,6 +15,10 @@ export default async function ProtectedLayout({
         redirect("/login");
     }
 
+    if (session.user.role === "NONE") {
+        redirect("/pending-approval");
+    }
+
     return (
         <div className="flex min-h-screen bg-muted/20">
             <Sidebar user={session.user} />

@@ -1,8 +1,7 @@
 "use client"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { createExam } from "@/app/actions/exam"
+import { createExam, updateExam } from "@/app/actions/exam"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,13 +10,38 @@ import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Trash2, Save, ArrowLeft, Upload, FileJson } from "lucide-react"
 import { bulkUploadQuestions } from "@/app/actions/exam"
+import * as XLSX from 'xlsx'
 
-export function CreateExamForm() {
+interface Question {
+    id?: string // Optional for new questions
+    text: string
+    options: string[]
+    correctAnswerIndex: number
+}
+
+interface ExamFormProps {
+    initialData?: {
+        id: string
+        title: string
+        description: string
+        timeLimit: number
+        questions: Question[]
+    }
+}
+
+export function CreateExamForm({ initialData }: ExamFormProps) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
-    const [questions, setQuestions] = useState([
+    const [questions, setQuestions] = useState<Question[]>([
         { text: "", options: ["", "", "", ""], correctAnswerIndex: 0 }
     ])
+
+    // Initialize state if initialData is provided
+    useEffect(() => {
+        if (initialData) {
+            setQuestions(initialData.questions)
+        }
+    }, [initialData])
 
     const handleAddQuestion = () => {
         setQuestions([...questions, { text: "", options: ["", "", "", ""], correctAnswerIndex: 0 }])
@@ -37,22 +61,71 @@ export function CreateExamForm() {
         const file = e.target.files?.[0]
         if (!file) return
 
-        const reader = new FileReader()
-        reader.onload = async (event) => {
-            const text = event.target?.result as string
-            const res = await bulkUploadQuestions(text)
-            if (res.questions) {
-                // If the first question is empty, replace it; otherwise, append.
-                if (questions.length === 1 && questions[0].text === "" && questions[0].options.every(o => o === "")) {
-                    setQuestions(res.questions)
+        if (file.name.endsWith('.csv')) {
+            const reader = new FileReader()
+            reader.onload = async (event) => {
+                const text = event.target?.result as string
+                const res = await bulkUploadQuestions(text)
+                if (res.questions) {
+                    updateQuestionsState(res.questions)
                 } else {
-                    setQuestions([...questions, ...res.questions])
+                    alert(res.error || "Failed to parse CSV")
                 }
-            } else {
-                alert(res.error || "Failed to parse CSV")
             }
+            reader.readAsText(file)
+        } else if (file.name.match(/\.(xlsx|xls)$/)) {
+            const reader = new FileReader()
+            reader.onload = (e) => {
+                const data = e.target?.result
+                const workbook = XLSX.read(data, { type: 'binary' })
+                const sheetName = workbook.SheetNames[0]
+                const sheet = workbook.Sheets[sheetName]
+                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][]
+
+                // transform to questions
+                // Header: Question Text, Option A, Option B, Option C, Option D, Correct Answer (A/B/C/D)
+                const parsedQuestions = jsonData.slice(1).filter(row => row.length >= 6).map(row => {
+                    const answerMap: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'a': 0, 'b': 1, 'c': 2, 'd': 3 }
+                    const correctVal = row[5]?.toString().trim()
+                    let correctIndex = 0
+
+                    if (correctVal && answerMap.hasOwnProperty(correctVal)) {
+                        correctIndex = answerMap[correctVal]
+                    } else {
+                        // Fallback to numeric if they use 1-4 or 0-3
+                        const parsed = parseInt(correctVal)
+                        if (!isNaN(parsed)) {
+                            // Assuming they might still use 1-4 or 0-3, let's guess 1-based if > 0? 
+                            // To be safe, let's treat 1-4 as 0-3
+                            correctIndex = parsed > 0 && parsed <= 4 ? parsed - 1 : 0
+                        }
+                    }
+
+                    return {
+                        text: row[0] as string,
+                        options: [row[1], row[2], row[3], row[4]].map(String),
+                        correctAnswerIndex: correctIndex
+                    }
+                })
+
+                if (parsedQuestions.length > 0) {
+                    updateQuestionsState(parsedQuestions)
+                } else {
+                    alert("No valid questions found in Excel file")
+                }
+            }
+            reader.readAsBinaryString(file)
+        } else {
+            alert("Unsupported file type. Please use CSV or Excel.")
         }
-        reader.readAsText(file)
+    }
+
+    const updateQuestionsState = (newQuestions: any[]) => {
+        if (questions.length === 1 && questions[0].text === "" && questions[0].options.every(o => o === "")) {
+            setQuestions(newQuestions)
+        } else {
+            setQuestions([...questions, ...newQuestions])
+        }
     }
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -68,12 +141,20 @@ export function CreateExamForm() {
         }
 
         try {
-            const res = await createExam(data)
+            let res
+            if (initialData) {
+                // Update Mode
+                res = await updateExam(initialData.id, data)
+            } else {
+                // Create Mode
+                res = await createExam(data)
+            }
+
             if (res.success) {
-                router.push("/teacher")
+                router.push(initialData ? `/teacher/exam/${initialData.id}` : "/teacher")
                 router.refresh()
             } else {
-                alert(res.error || "Failed to create exam")
+                alert(res.error || "Failed to save exam")
             }
         } finally {
             setLoading(false)
@@ -87,8 +168,8 @@ export function CreateExamForm() {
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <div>
-                    <h1 className="text-2xl font-bold">Create New Exam</h1>
-                    <p className="text-muted-foreground">Define exam details and add questions.</p>
+                    <h1 className="text-2xl font-bold">{initialData ? "Edit Exam" : "Create New Exam"}</h1>
+                    <p className="text-muted-foreground">{initialData ? "Modify exam details and questions." : "Define exam details and add questions."}</p>
                 </div>
             </div>
 
@@ -99,15 +180,15 @@ export function CreateExamForm() {
                 <CardContent className="space-y-4">
                     <div className="grid gap-2">
                         <Label htmlFor="title">Exam Title</Label>
-                        <Input id="title" name="title" required placeholder="e.g. Midterm Physics" />
+                        <Input id="title" name="title" defaultValue={initialData?.title} required placeholder="e.g. Midterm Physics" />
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="description">Description</Label>
-                        <Input id="description" name="description" required placeholder="Brief description of the exam..." />
+                        <Input id="description" name="description" defaultValue={initialData?.description} required placeholder="Brief description of the exam..." />
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
-                        <Input id="timeLimit" name="timeLimit" type="number" min="1" required className="max-w-[150px]" placeholder="60" />
+                        <Input id="timeLimit" name="timeLimit" defaultValue={initialData?.timeLimit} type="number" min="1" required className="max-w-[150px]" placeholder="60" />
                     </div>
                 </CardContent>
             </Card>
@@ -122,15 +203,20 @@ export function CreateExamForm() {
                         <div className="relative">
                             <input
                                 type="file"
-                                accept=".csv"
+                                accept=".csv,.xlsx,.xls"
                                 onChange={handleBulkUpload}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                title="Upload questions from CSV"
+                                title="Upload questions from CSV or Excel"
                             />
                             <Button type="button" variant="outline" size="sm" className="shadow-sm">
-                                <Upload className="mr-2 h-4 w-4" /> Bulk Upload (CSV)
+                                <Upload className="mr-2 h-4 w-4" /> Bulk Upload
                             </Button>
                         </div>
+                        <a href="/exam-template.csv" download="exam-template.csv">
+                            <Button type="button" variant="ghost" size="sm" className="text-muted-foreground">
+                                <FileJson className="mr-2 h-4 w-4" /> Template
+                            </Button>
+                        </a>
                         <Button type="button" variant="outline" size="sm" onClick={handleAddQuestion} className="shadow-sm border-dashed border-primary/40 hover:border-primary">
                             <Plus className="mr-2 h-4 w-4" /> Add Question
                         </Button>
@@ -142,17 +228,22 @@ export function CreateExamForm() {
                         <Card key={qIndex} className="relative overflow-hidden group shadow-md hover:shadow-lg transition-all border-l-4 border-l-primary/50">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-muted/10">
                                 <CardTitle className="text-base font-semibold text-primary">Question {qIndex + 1}</CardTitle>
-                                {questions.length > 1 && (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                        onClick={() => handleRemoveQuestion(qIndex)}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                )}
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-muted-foreground">
+                                        {q.id ? "ID: " + q.id.slice(-4) : "New"}
+                                    </span>
+                                    {questions.length > 1 && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => handleRemoveQuestion(qIndex)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
+                                </div>
                             </CardHeader>
                             <CardContent className="space-y-6 pt-6">
                                 <div className="grid gap-2">
@@ -214,9 +305,9 @@ export function CreateExamForm() {
 
             <div className="flex justify-end pt-4">
                 <Button type="submit" disabled={loading} size="lg" className="w-full md:w-auto">
-                    {loading ? "Creating..." : (
+                    {loading ? "Saving..." : (
                         <>
-                            <Save className="mr-2 h-4 w-4" /> Save Exam
+                            <Save className="mr-2 h-4 w-4" /> {initialData ? "Update Exam" : "Save Exam"}
                         </>
                     )}
                 </Button>

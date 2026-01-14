@@ -69,9 +69,15 @@ export default async function StudentPage() {
                                 {isTaken && result && (
                                     <div className="p-3 bg-muted rounded-lg flex justify-between items-center">
                                         <span className="text-sm font-medium">Score</span>
-                                        <Badge variant={result.score >= 50 ? "default" : "destructive"}>
-                                            {result.score}%
-                                        </Badge>
+                                        {(() => {
+                                            const totalQuestions = exam._count.questions || 0
+                                            const cgpa = totalQuestions > 0 ? (result.score / totalQuestions) * 10 : 0
+                                            return (
+                                                <Badge variant={cgpa >= 5 ? "default" : "destructive"}>
+                                                    CGPA: {cgpa.toFixed(1)}
+                                                </Badge>
+                                            )
+                                        })()}
                                     </div>
                                 )}
                             </CardContent>

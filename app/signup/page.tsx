@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, Command, CheckCircle2 } from "lucide-react"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 export default function SignupPage() {
     const router = useRouter()
@@ -135,6 +142,18 @@ export default function SignupPage() {
                                         />
                                         {error.city && <p className="text-xs text-destructive">{error.city[0]}</p>}
                                     </div>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="requestedRole">Account Type</Label>
+                                    <Select name="requestedRole" defaultValue="STUDENT">
+                                        <SelectTrigger className="h-10 bg-background/80">
+                                            <SelectValue placeholder="Select account type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="STUDENT">Student</SelectItem>
+                                            <SelectItem value="TEACHER">Teacher</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="password">Password</Label>

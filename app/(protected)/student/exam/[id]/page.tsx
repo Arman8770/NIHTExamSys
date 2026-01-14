@@ -3,11 +3,11 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { ExamInterface } from "@/components/ExamInterface"
 
-export default async function TakeExamPage({ params }: { params: { id: string } }) {
+export default async function TakeExamPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await auth()
     if (!session || (session.user.role !== "STUDENT" && session.user.role !== "ADMIN")) redirect("/")
 
-    const { id } = params
+    const { id } = await params
 
     const exam = await prisma.exam.findUnique({
         where: { id },
