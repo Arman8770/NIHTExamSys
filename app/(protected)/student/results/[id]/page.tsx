@@ -9,6 +9,7 @@ import { RotateCcw, ArrowLeft, Trophy, Clock, CheckCircle2, XCircle, Share2, Dow
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { CertificateView } from "@/components/CertificateView"
+import { DownloadReportButton } from "@/components/DownloadReportButton"
 
 export default async function ExamResultPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await auth()
@@ -63,7 +64,7 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
                 Back to Dashboard
             </Link>
 
-            <Card className="border-none shadow-2xl overflow-hidden bg-gradient-to-br from-background to-muted/30">
+            <Card id="exam-result-report" className="border-none shadow-2xl overflow-hidden bg-gradient-to-br from-background to-muted/30">
                 {/* Header Decoration */}
                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-primary to-indigo-600" />
 
@@ -152,7 +153,7 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
                     </div>
 
                     {/* @ts-ignore: Schema fields pending migration */}
-                    {result.teacherApproval && result.adminApproval && (
+                    {cgpa >= 5 && (
                         <div className="mt-8 p-6 bg-emerald-50/50 border border-emerald-100 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-emerald-100 rounded-full">
@@ -177,9 +178,15 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
                                 <RotateCcw className="mr-2 h-4 w-4" /> Return to Dashboard
                             </Button>
                         </Link>
-                        <Button variant="outline" className="flex-1 h-12 text-base border-dashed hover:border-primary/50">
-                            <Download className="mr-2 h-4 w-4" /> Download Report
-                        </Button>
+                        <DownloadReportButton
+                            studentName={session.user.name || "Student"}
+                            examTitle={result.exam.title}
+                            score={result.score}
+                            totalQuestions={result.exam.questions.length}
+                            completionTime={`${Math.floor(result.completionTime / 60)}m ${result.completionTime % 60}s`}
+                            questions={result.exam.questions}
+                            responses={result.responses as Record<string, number>}
+                        />
                     </div>
 
                     <Separator className="my-12" />

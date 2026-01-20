@@ -41,7 +41,7 @@ export default async function Navbar() {
                             Admin
                         </Link>
                     )}
-                    {user?.role === "TEACHER" && (
+                    {(user?.role === "TEACHER" || user?.role === "ADMIN") && (
                         <Link href="/teacher" className="text-sm font-medium transition-colors hover:text-primary text-muted-foreground hover:bg-muted/50 px-3 py-2 rounded-md">
                             Teacher
                         </Link>

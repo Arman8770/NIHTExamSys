@@ -8,6 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
 import {
     Select,
     SelectContent,
@@ -20,10 +21,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 // import { User } from "@prisma/client"
 import { Role } from "@/types/role"
-import { updateUserRole } from "@/app/actions/user"
+import { updateUserRole, deleteUserAction } from "@/app/actions/user"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
+import { Loader2, Trash2 } from "lucide-react"
 
 interface UserTableProps {
     users: any[]
@@ -38,6 +39,21 @@ export function UserTable({ users }: UserTableProps) {
         try {
             await updateUserRole(userId, newRole)
             router.refresh()
+        } finally {
+            setLoadingId(null)
+        }
+    }
+
+    const handleDelete = async (userId: string) => {
+        if (!confirm("Are you sure you want to delete this user?")) return
+        setLoadingId(userId)
+        try {
+            const res = await deleteUserAction(userId)
+            if (res.error) {
+                alert(res.error)
+            } else {
+                router.refresh()
+            }
         } finally {
             setLoadingId(null)
         }
@@ -101,6 +117,15 @@ export function UserTable({ users }: UserTableProps) {
                                                 <SelectItem value="STUDENT">STUDENT</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => handleDelete(user.id)}
+                                            disabled={loadingId === user.id}
+                                            className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 w-9"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
                                     </div>
                                 </TableCell>
                             </TableRow>

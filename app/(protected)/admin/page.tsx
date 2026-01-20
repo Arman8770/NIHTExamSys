@@ -3,8 +3,9 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { UserTable } from "@/components/UserTable"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, ShieldCheck } from "lucide-react"
-import { AdminApprovalList } from "@/components/AdminApprovalList"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { Users, ShieldCheck, BookOpen, Plus } from "lucide-react"
 
 export default async function AdminPage() {
     const session = await auth()
@@ -18,15 +19,7 @@ export default async function AdminPage() {
     const teacherCount = users.filter((u: any) => u.role === "TEACHER").length
     const studentCount = users.filter((u: any) => u.role === "STUDENT").length
 
-    // @ts-ignore: Schema fields missing until migration
-    const pendingApprovals = await prisma.result.findMany({
-        where: { adminApproval: false },
-        include: {
-            exam: { select: { title: true } },
-            student: { select: { name: true, email: true } }
-        },
-        orderBy: { createdAt: 'desc' }
-    })
+
 
     return (
         <div className="container mx-auto px-4 py-8 space-y-8 min-h-[calc(100vh-4rem)]">
@@ -71,7 +64,7 @@ export default async function AdminPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="pt-6">
-                        <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{teacherCount}</div>
+                        <div className="text-3xl font-bold text-blue-600">{teacherCount}</div>
                         <p className="text-xs text-muted-foreground mt-1 flex items-center">
                             <span className="text-blue-500 mr-1">●</span> Exam creators
                         </p>
@@ -89,11 +82,45 @@ export default async function AdminPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="pt-6">
-                        <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{studentCount}</div>
+                        <div className="text-3xl font-bold text-indigo-600">{studentCount}</div>
                         <p className="text-xs text-muted-foreground mt-1 flex items-center">
                             <span className="text-indigo-500 mr-1">●</span> Exam takers
                         </p>
                     </CardContent>
+                </Card>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+                <Card className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white border-none overflow-hidden relative group">
+                    <div className="absolute right-0 top-0 p-8 opacity-20 transform translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform">
+                        <BookOpen className="h-40 w-40" />
+                    </div>
+                    <CardHeader>
+                        <CardTitle className="text-2xl">Exam Hub</CardTitle>
+                        <p className="text-blue-100">Create and oversee all academic assessments.</p>
+                    </CardHeader>
+                    <CardContent className="flex gap-4 relative z-10">
+                        <Link href="/teacher/create">
+                            <Button className="bg-white text-blue-600 hover:bg-blue-50 font-bold">
+                                <Plus className="h-4 w-4 mr-2" /> Create Exam
+                            </Button>
+                        </Link>
+                        <Link href="/admin/exams">
+                            <Button variant="outline" className="border-white/30 text-white hover:bg-white/10">
+                                View All Exams
+                            </Button>
+                        </Link>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-white border-none shadow-lg flex items-center p-6 gap-6">
+                    <div className="h-16 w-16 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600">
+                        <ShieldCheck className="h-8 w-8" />
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-bold text-slate-800">System Integrity</h3>
+                        <p className="text-slate-500 text-sm">All security protocols are currently active and monitoring.</p>
+                    </div>
                 </Card>
             </div>
 
@@ -102,9 +129,7 @@ export default async function AdminPage() {
                 <UserTable users={users} />
             </div>
 
-            <div className="space-y-4">
-                <AdminApprovalList results={pendingApprovals} />
-            </div>
+
         </div>
     )
 }

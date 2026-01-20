@@ -1,9 +1,10 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { useRef, useState } from "react"
-import { Download, Loader2 } from "lucide-react"
+import { Download, Loader2, ArrowLeft } from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import html2canvas from "html2canvas"
 import jsPDF from "jspdf"
 
@@ -16,10 +17,12 @@ interface CertificateViewProps {
 }
 
 export function CertificateView({ studentName, examTitle, score, totalQuestions, date }: CertificateViewProps) {
+    const router = useRouter()
     const certificateRef = useRef<HTMLDivElement>(null)
     const [isDownloading, setIsDownloading] = useState(false)
 
     const cgpa = totalQuestions > 0 ? (score / totalQuestions) * 10 : 0
+    const isFail = cgpa < 4
 
     const handleDownloadPdf = async () => {
         const element = certificateRef.current
@@ -42,7 +45,7 @@ export function CertificateView({ studentName, examTitle, score, totalQuestions,
             })
 
             pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height)
-            pdf.save(`${examTitle.replace(/\s+/g, '_')}_Certificate.pdf`)
+            pdf.save(`${examTitle.replace(/\s+/g, '_')}_${isFail ? 'Statement' : 'Certificate'}.pdf`)
         } catch (error) {
             console.error("Failed to download PDF:", error)
             alert(`Failed to download certificate: ${error instanceof Error ? error.message : String(error)}`)
@@ -53,6 +56,29 @@ export function CertificateView({ studentName, examTitle, score, totalQuestions,
 
     return (
         <div className="space-y-8 flex flex-col items-center">
+            {/* Header Actions */}
+            <div className="flex items-center justify-between w-full max-w-[800px]">
+                <Button
+                    variant="ghost"
+                    onClick={() => router.back()}
+                    className="hover:bg-transparent hover:text-primary px-0"
+                >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
+                </Button>
+                <Button onClick={handleDownloadPdf} disabled={isDownloading} className="gap-2 bg-[#059669] hover:bg-[#047857] text-white">
+                    {isDownloading ? (
+                        <>
+                            <Loader2 className="h-4 w-4 animate-spin" /> Generating...
+                        </>
+                    ) : (
+                        <>
+                            <Download className="h-4 w-4" /> Download Certificate
+                        </>
+                    )}
+                </Button>
+            </div>
+
             {/* Visible Certificate Preview */}
             <div className="relative w-full max-w-[800px] aspect-[4/3] shadow-2xl rounded-sm overflow-hidden bg-white text-center select-none" ref={certificateRef}>
                 <div className="w-full h-full p-12 flex flex-col items-center justify-center border-[10px] border-double border-[#e7e5e4] relative">
@@ -66,7 +92,9 @@ export function CertificateView({ studentName, examTitle, score, totalQuestions,
 
                     <div className="relative z-10 space-y-6">
                         <div className="mb-8">
-                            <h1 className="text-5xl font-serif text-[#1e293b] tracking-wide">Certificate of Achievement</h1>
+                            <h1 className="text-5xl font-serif text-[#1e293b] tracking-wide">
+                                {isFail ? "Statement of Result" : "Certificate of Achievement"}
+                            </h1>
                             <div className="h-1 w-32 bg-[#fbbf24] mx-auto mt-4" />
                         </div>
 
@@ -78,13 +106,21 @@ export function CertificateView({ studentName, examTitle, score, totalQuestions,
                             </h2>
                         </div>
 
-                        <p className="text-xl text-[#64748b] font-light">has successfully passed the exam</p>
+                        <p className="text-xl text-[#64748b] font-light">
+                            {isFail ? "has participated in the exam" : "has successfully passed the exam"}
+                        </p>
 
                         <h3 className="text-3xl font-bold text-[#d97706] font-serif">{examTitle}</h3>
 
                         <p className="text-lg text-[#475569] mt-4">
                             with a CGPA of <span className="font-bold text-[#0f172a] text-xl">{cgpa.toFixed(1)}</span>
                         </p>
+
+                        {isFail && (
+                            <p className="text-sm text-[#64748b] italic mt-2 max-w-md mx-auto">
+                                "Success is not final, failure is not fatal: It is the courage to continue that counts."
+                            </p>
+                        )}
 
                         <div className="mt-12 flex justify-between items-end w-full max-w-lg mx-auto gap-12 text-left">
                             <div className="flex flex-col items-center gap-2">
@@ -103,25 +139,7 @@ export function CertificateView({ studentName, examTitle, score, totalQuestions,
                 </div>
             </div>
 
-            <Card className="w-full max-w-[800px]">
-                <CardContent className="flex items-center justify-between p-6">
-                    <div>
-                        <h3 className="font-semibold text-lg">Download Your Certificate</h3>
-                        <p className="text-sm text-muted-foreground">Get a high-quality PDF copy of your achievement.</p>
-                    </div>
-                    <Button onClick={handleDownloadPdf} disabled={isDownloading} size="lg" className="gap-2 bg-emerald-600 hover:bg-emerald-700">
-                        {isDownloading ? (
-                            <>
-                                <Loader2 className="h-4 w-4 animate-spin" /> Generating...
-                            </>
-                        ) : (
-                            <>
-                                <Download className="h-4 w-4" /> Download PDF
-                            </>
-                        )}
-                    </Button>
-                </CardContent>
-            </Card>
+
         </div>
     )
 }

@@ -7,17 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Badge } from "@/components/ui/badge"
 import { Clock, BookOpen, CheckCircle, ArrowRight } from "lucide-react"
 
+import { getExams } from "@/app/actions/exam"
+
 export default async function StudentPage() {
     const session = await auth()
     if (session?.user?.role !== "STUDENT") redirect("/")
 
-    const exams = await prisma.exam.findMany({
-        orderBy: { createdAt: 'desc' },
-        include: {
-            teacher: { select: { name: true } },
-            _count: { select: { questions: true } }
-        }
-    })
+    const res = await getExams()
+    const exams = res.exams || []
 
     const results = await prisma.result.findMany({
         where: { studentId: session.user.id }

@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { createExam, updateExam } from "@/app/actions/exam"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,6 +32,8 @@ interface ExamFormProps {
 
 export function CreateExamForm({ initialData }: ExamFormProps) {
     const router = useRouter()
+    const pathname = usePathname()
+    const { data: session } = useSession()
     const [loading, setLoading] = useState(false)
     const [questions, setQuestions] = useState<Question[]>([
         { text: "", options: ["", "", "", ""], correctAnswerIndex: 0 }
@@ -61,59 +64,75 @@ export function CreateExamForm({ initialData }: ExamFormProps) {
         const file = e.target.files?.[0]
         if (!file) return
 
-        if (file.name.endsWith('.csv')) {
-            const reader = new FileReader()
-            reader.onload = async (event) => {
-                const text = event.target?.result as string
-                const res = await bulkUploadQuestions(text)
-                if (res.questions) {
-                    updateQuestionsState(res.questions)
-                } else {
-                    alert(res.error || "Failed to parse CSV")
-                }
-            }
-            reader.readAsText(file)
-        } else if (file.name.match(/\.(xlsx|xls)$/)) {
-            const reader = new FileReader()
-            reader.onload = (e) => {
-                const data = e.target?.result
+        const reader = new FileReader()
+        reader.onload = (event) => {
+            try {
+                const data = event.target?.result
                 const workbook = XLSX.read(data, { type: 'binary' })
                 const sheetName = workbook.SheetNames[0]
                 const sheet = workbook.Sheets[sheetName]
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][]
 
-                // transform to questions
-                // Header: Question Text, Option A, Option B, Option C, Option D, Correct Answer (A/B/C/D)
+                // Header: Question Text, Option A, Option B, Option C, Option D, Correct Answer
                 const parsedQuestions = jsonData.slice(1).filter(row => row.length >= 6).map(row => {
-                    const answerMap: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'a': 0, 'b': 1, 'c': 2, 'd': 3 }
-                    const correctVal = row[5]?.toString().trim()
-                    let correctIndex = 0
+                    const text = String(row[0] || "").trim()
+                    const options = [
+                        String(row[1] || "").trim(),
+                        String(row[2] || "").trim(),
+                        String(row[3] || "").trim(),
+                        String(row[4] || "").trim()
+                    ]
+                    const correctVal = String(row[5] || "").trim()
 
-                    if (correctVal && answerMap.hasOwnProperty(correctVal)) {
-                        correctIndex = answerMap[correctVal]
+                    let correctIndex = 0 // Default fallback
+
+                    // Helper to find index by letter
+                    const letterMap: Record<string, number> = {
+                        'A': 0, 'B': 1, 'C': 2, 'D': 3,
+                        'a': 0, 'b': 1, 'c': 2, 'd': 3
+                    }
+
+                    if (letterMap.hasOwnProperty(correctVal)) {
+                        correctIndex = letterMap[correctVal]
                     } else {
-                        // Fallback to numeric if they use 1-4 or 0-3
-                        const parsed = parseInt(correctVal)
-                        if (!isNaN(parsed)) {
-                            // Assuming they might still use 1-4 or 0-3, let's guess 1-based if > 0? 
-                            // To be safe, let's treat 1-4 as 0-3
-                            correctIndex = parsed > 0 && parsed <= 4 ? parsed - 1 : 0
+                        // Check if it's a numeric index (handle 1-4 and 0-3)
+                        const parsedNum = parseInt(correctVal)
+                        if (!isNaN(parsedNum)) {
+                            if (parsedNum >= 1 && parsedNum <= 4) {
+                                correctIndex = parsedNum - 1
+                            } else if (parsedNum >= 0 && parsedNum <= 3) {
+                                correctIndex = parsedNum
+                            }
+                        } else {
+                            // Text matching: Check if the correctVal matches any of the option texts exactly
+                            const foundIndex = options.findIndex(opt => opt.toLowerCase() === correctVal.toLowerCase())
+                            if (foundIndex !== -1) {
+                                correctIndex = foundIndex
+                            }
                         }
                     }
 
                     return {
-                        text: row[0] as string,
-                        options: [row[1], row[2], row[3], row[4]].map(String),
+                        text,
+                        options,
                         correctAnswerIndex: correctIndex
                     }
                 })
 
-                if (parsedQuestions.length > 0) {
-                    updateQuestionsState(parsedQuestions)
+                const validQuestions = parsedQuestions.filter(q => q.text !== "")
+
+                if (validQuestions.length > 0) {
+                    updateQuestionsState(validQuestions)
                 } else {
-                    alert("No valid questions found in Excel file")
+                    alert("No valid questions found in file. Ensure you have 6 columns: Question, Opt1, Opt2, Opt3, Opt4, Answer.")
                 }
+            } catch (err) {
+                console.error("Parse error:", err)
+                alert("Failed to parse the file. Please ensure it's a valid CSV or Excel file.")
             }
+        }
+
+        if (file.name.match(/\.(xlsx|xls|csv)$/)) {
             reader.readAsBinaryString(file)
         } else {
             alert("Unsupported file type. Please use CSV or Excel.")
@@ -151,7 +170,7 @@ export function CreateExamForm({ initialData }: ExamFormProps) {
             }
 
             if (res.success) {
-                router.push(initialData ? `/teacher/exam/${initialData.id}` : "/teacher")
+                router.push(initialData ? (session?.user?.role === "ADMIN" && !pathname.includes("/teacher") ? `/admin/exams` : `/teacher/exam/${initialData.id}`) : (session?.user?.role === "ADMIN" && !pathname.includes("/teacher") ? "/admin/exams" : "/teacher/exams"))
                 router.refresh()
             } else {
                 alert(res.error || "Failed to save exam")

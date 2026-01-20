@@ -18,7 +18,7 @@ import {
     Award
 } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { User } from "next-auth"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -28,6 +28,11 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Sidebar({ className, user }: SidebarProps) {
     const pathname = usePathname()
     const [open, setOpen] = useState(false)
+    const [isMounted, setIsMounted] = useState(false)
+
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
 
     const routes = [
         {
@@ -67,6 +72,18 @@ export function Sidebar({ className, user }: SidebarProps) {
             role: "TEACHER"
         },
         {
+            label: "Batches",
+            icon: Users,
+            href: "/admin/batches",
+            role: "ADMIN"
+        },
+        {
+            label: "Batches",
+            icon: Users,
+            href: "/teacher/batches",
+            role: "TEACHER"
+        },
+        {
             label: "All Exams",
             icon: BookOpen,
             href: "/admin/exams", // We'll create this or redirect
@@ -80,9 +97,15 @@ export function Sidebar({ className, user }: SidebarProps) {
         },
         {
             label: "Certificates",
-            icon: ShieldCheck,
+            icon: Award,
             href: "/student/certificates",
             role: "STUDENT"
+        },
+        {
+            label: "Student Certificates",
+            icon: Award,
+            href: "/certificates",
+            role: "TEACHER"
         },
         {
             label: "Settings",
@@ -108,7 +131,7 @@ export function Sidebar({ className, user }: SidebarProps) {
                 <div className="space-y-1">
                     {filteredRoutes.map((route) => (
                         <Link
-                            key={route.label}
+                            key={route.href}
                             href={route.href}
                             onClick={() => setOpen(false)}
                             className={cn(
@@ -157,16 +180,18 @@ export function Sidebar({ className, user }: SidebarProps) {
     return (
         <>
             {/* Mobile Trigger */}
-            <Sheet open={open} onOpenChange={setOpen}>
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="md:hidden fixed top-4 left-4 z-50">
-                        <Menu />
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="p-0 bg-slate-900 border-r-slate-800 w-72">
-                    <SidebarContent />
-                </SheetContent>
-            </Sheet>
+            {isMounted && (
+                <Sheet open={open} onOpenChange={setOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className="md:hidden fixed top-4 left-4 z-50">
+                            <Menu />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="p-0 bg-slate-900 border-r-slate-800 w-72">
+                        <SidebarContent />
+                    </SheetContent>
+                </Sheet>
+            )}
 
             {/* Desktop Sidebar */}
             <div className="hidden md:flex h-full w-72 flex-col fixed inset-y-0 z-50">

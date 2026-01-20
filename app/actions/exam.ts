@@ -1,4 +1,5 @@
 "use server"
+// Using new Prisma Client path: generated/prisma-client
 
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/db"
@@ -31,6 +32,11 @@ export async function submitExam(examId: string, answers: Record<string, number>
         }
     })
 
+    // Calculate CGPA for auto-approval
+    const totalQuestions = exam.questions.length
+    const cgpa = totalQuestions > 0 ? (score / totalQuestions) * 10 : 0
+    const isApproved = cgpa >= 5
+
     // Save result
     try {
         console.log("Saving result to DB...")
@@ -41,8 +47,8 @@ export async function submitExam(examId: string, answers: Record<string, number>
                 score,
                 completionTime: timeTaken,
                 responses: answers as any,
-                teacherApproval: true,
-                adminApproval: true,
+                teacherApproval: isApproved,
+                adminApproval: isApproved,
             }
         })
         console.log("Result saved successfully:", newResult.id)
@@ -105,47 +111,77 @@ export async function getExams() {
         const query: any = {
             orderBy: { createdAt: 'desc' },
             include: {
-                _count: { select: { results: true } },
+                _count: { select: { results: true, questions: true } },
                 teacher: { select: { name: true } }
             }
         }
 
         // If not admin, logic depends on role
         if (session.user.role === "TEACHER") {
-            query.where = { teacherId: session.user.id }
-        } else if (session.user.role === "STUDENT") {
-            // Only show assigned exams
+            // Show owned exams OR assigned exams
             query.where = {
-                assignments: {
-                    some: {
-                        studentId: session.user.id
+                OR: [
+                    { teacherId: session.user.id },
+                    {
+                        assignments: {
+                            some: {
+                                studentId: session.user.id
+                            }
+                        }
                     }
-                }
+                ]
+            }
+        } else if (session.user.role === "STUDENT") {
+            // Only show assigned exams (Individual OR via Batch)
+            query.where = {
+                OR: [
+                    {
+                        assignments: {
+                            some: {
+                                studentId: session.user.id
+                            }
+                        }
+                    },
+                    {
+                        batches: {
+                            some: {
+                                students: {
+                                    some: {
+                                        id: session.user.id
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
             }
         }
 
-        const exams = await prisma.exam.findMany(query)
+        const exams = await prisma.exam?.findMany(query)
         return { exams }
     } catch (error) {
-        console.error("Failed to fetch exams:", error)
+        console.error("Failed to fetch exams (verified client):", error)
         return { error: "Failed to fetch exams" }
     }
 }
 
-export async function getAllStudents() {
+export async function getAllAssignmentUsers() {
     const session = await auth()
     if (!session?.user?.id || (session.user.role !== "TEACHER" && session.user.role !== "ADMIN")) {
         return { error: "Unauthorized" }
     }
 
     try {
-        const students = await prisma.user.findMany({
-            where: { role: "STUDENT" },
-            select: { id: true, name: true, email: true }
+        const users = await prisma.user.findMany({
+            where: {
+                role: { in: ["STUDENT", "TEACHER"] },
+                NOT: { id: session.user.id } // Don't assign to self
+            },
+            select: { id: true, name: true, email: true, role: true }
         })
-        return { students }
+        return { users }
     } catch (error) {
-        return { error: "Failed to fetch students" }
+        return { error: "Failed to fetch users" }
     }
 }
 
@@ -209,9 +245,38 @@ export async function getExamAssignments(examId: string) {
             where: { examId },
             select: { studentId: true }
         })
-        return { assignedIds: assignments.map(a => a.studentId) }
+        const batchAssignments = await prisma.batch.findMany({
+            where: { exams: { some: { id: examId } } },
+            select: { id: true }
+        })
+        return {
+            assignedIds: assignments.map(a => a.studentId),
+            assignedBatchIds: batchAssignments.map(b => b.id)
+        }
     } catch (error) {
         return { error: "Failed to fetch assignments" }
+    }
+}
+
+export async function assignExamToBatches(examId: string, batchIds: string[]) {
+    const session = await auth()
+    if (!session?.user?.id || (session.user.role !== "TEACHER" && session.user.role !== "ADMIN")) {
+        return { error: "Unauthorized" }
+    }
+
+    try {
+        await prisma.exam.update({
+            where: { id: examId },
+            data: {
+                batches: {
+                    set: batchIds.map(id => ({ id }))
+                }
+            }
+        })
+        revalidatePath("/teacher")
+        return { success: true }
+    } catch (error) {
+        return { error: "Failed to assign batches" }
     }
 }
 
@@ -245,17 +310,39 @@ export async function deleteExam(examId: string) {
 }
 
 export async function bulkUploadQuestions(csvData: string) {
-    // Basic CSV parser for "Question,Option1,Option2,Option3,Option4,CorrectIndex(0-3)"
     try {
         const lines = csvData.split('\n').filter(line => line.trim().length > 0)
         const questions = lines.slice(1).map(line => {
-            const [text, o1, o2, o3, o4, correct] = line.split(',').map(s => s.trim())
+            // Simple comma split (still limited, but improved)
+            const parts = line.split(',').map(s => s.trim())
+            if (parts.length < 6) return null
+
+            const [text, o1, o2, o3, o4, correctVal] = parts
+            const options = [o1, o2, o3, o4]
+
+            let correctIndex = 0
+            const letterMap: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'a': 0, 'b': 1, 'c': 2, 'd': 3 }
+
+            if (letterMap.hasOwnProperty(correctVal)) {
+                correctIndex = letterMap[correctVal]
+            } else {
+                const parsedNum = parseInt(correctVal)
+                if (!isNaN(parsedNum)) {
+                    if (parsedNum >= 1 && parsedNum <= 4) correctIndex = parsedNum - 1
+                    else if (parsedNum >= 0 && parsedNum <= 3) correctIndex = parsedNum
+                } else {
+                    const foundIndex = options.findIndex(opt => opt.toLowerCase() === correctVal.toLowerCase())
+                    if (foundIndex !== -1) correctIndex = foundIndex
+                }
+            }
+
             return {
                 text,
-                options: [o1, o2, o3, o4],
-                correctAnswerIndex: parseInt(correct) || 0
+                options,
+                correctAnswerIndex: correctIndex
             }
-        })
+        }).filter(q => q !== null)
+
         return { questions }
     } catch (error) {
         return { error: "Failed to parse CSV file" }
@@ -393,9 +480,93 @@ export async function getStudentCertificates() {
             orderBy: { createdAt: 'desc' }
         })
 
-        return { certificates: results }
+        const certificates = results.filter(r => {
+            const totalQuestions = r.exam._count.questions || 0
+            const cgpa = totalQuestions > 0 ? (r.score / totalQuestions) * 10 : 0
+            // Approval is no longer required
+            return cgpa >= 5
+        })
+
+        return { certificates }
     } catch (error) {
         console.error("Failed to fetch certificates:", error)
         return { error: "Failed to fetch certificates" }
+    }
+}
+
+export async function getAllCertificates(filters?: {
+    search?: string,
+    startDate?: string,
+    endDate?: string
+}) {
+    const session = await auth()
+    if (!session?.user?.id || (session.user.role !== "TEACHER" && session.user.role !== "ADMIN")) {
+        return { error: "Unauthorized" }
+    }
+
+    try {
+        const where: any = {}
+
+        if (filters?.search) {
+            const searchConditions: any[] = [
+                { name: { contains: filters.search } },
+                { email: { contains: filters.search } }
+            ]
+
+            // Handle phone number search if input is numeric
+            if (/^\d+$/.test(filters.search)) {
+                try {
+                    const phoneVal = BigInt(filters.search)
+                    searchConditions.push({ phoneNumber: { equals: phoneVal } })
+                } catch (e) {
+                    // Ignore parse errors
+                }
+            }
+
+            where.student = {
+                OR: searchConditions
+            }
+        }
+
+        if (filters?.startDate || filters?.endDate) {
+            where.createdAt = {}
+            if (filters.startDate) {
+                const start = new Date(filters.startDate)
+                start.setHours(0, 0, 0, 0)
+                where.createdAt.gte = start
+            }
+            if (filters.endDate) {
+                const end = new Date(filters.endDate)
+                end.setHours(23, 59, 59, 999)
+                where.createdAt.lte = end
+            }
+        }
+
+        const results = await prisma.result.findMany({
+            where,
+            include: {
+                exam: {
+                    select: {
+                        title: true,
+                        _count: { select: { questions: true } }
+                    }
+                },
+                student: {
+                    select: { name: true, email: true, phoneNumber: true }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        })
+
+        const certificates = results.filter(r => {
+            const totalQuestions = r.exam._count.questions || 0
+            const cgpa = totalQuestions > 0 ? (r.score / totalQuestions) * 10 : 0
+            return cgpa >= 5
+        })
+
+        return { certificates }
+    } catch (error) {
+        console.error("Failed to fetch all certificates:", error)
+        return { error: "Failed to fetch all certificates" }
     }
 }

@@ -4,6 +4,8 @@ import "./globals.css";
 
 
 
+import { SessionProvider } from "@/components/providers/SessionProvider";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -20,7 +22,9 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} min-h-screen bg-background antialiased selection:bg-blue-600/10 selection:text-blue-600`}>
-        {children}
+        <SessionProvider>
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );

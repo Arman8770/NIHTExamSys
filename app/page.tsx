@@ -41,14 +41,10 @@ export default async function Home() {
               <>
                 <Link href="/login">
                   <Button size="lg" className="h-14 px-8 text-lg rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all hover:scale-105">
-                    Get Started Free
+                    Let's Get Started
                   </Button>
                 </Link>
-                <Link href="/login">
-                  <Button size="lg" variant="outline" className="h-14 px-8 text-lg rounded-full border-2 hover:bg-muted/50 backdrop-blur-sm">
-                    View Demo
-                  </Button>
-                </Link>
+
               </>
             )}
           </div>
@@ -96,7 +92,7 @@ export default async function Home() {
 
       {/* Role Links Section */}
       <section className="bg-muted/30 py-32 relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-slate-200/50 [mask-image:linear-gradient(0deg,white,transparent)] dark:bg-grid-slate-800/50" />
+        <div className="absolute inset-0 bg-grid-slate-200/50 [mask-image:linear-gradient(0deg,white,transparent)]" />
 
         <div className="container relative mx-auto px-4">
           <div className="text-center mb-16 space-y-4">

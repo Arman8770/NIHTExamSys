@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Plus, Users, Clock, ArrowRight, FileText, Trash2, Search, BookOpen } from "lucide-react"
 import { deleteExam } from "@/app/actions/exam"
 import { Badge } from "@/components/ui/badge"
+import { AssignExamModal } from "@/components/AssignExamModal"
 
 export default async function AdminExamsPage() {
     const session = await auth()
@@ -72,6 +73,9 @@ export default async function AdminExamsPage() {
                                     <Award className="h-4 w-4 mr-2" />
                                     <span>Attempts: <span className="text-foreground font-medium">{exam._count.results}</span></span>
                                 </div>
+                            </div>
+                            <div className="pt-2">
+                                <AssignExamModal examId={exam.id} examTitle={exam.title} />
                             </div>
                         </CardContent>
                         <CardFooter className="bg-muted/30 pt-4">

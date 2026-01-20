@@ -52,7 +52,7 @@ export default function LoginPage() {
     return (
         <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
             {/* Left Side - Hero/Testimonial */}
-            <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex overflow-hidden">
+            <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary via-blue-700 to-indigo-800" />
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80')] opacity-10 bg-cover bg-center mix-blend-overlay" />
 
@@ -123,7 +123,13 @@ export default function LoginPage() {
                                 <div className="grid gap-2">
                                     <div className="flex items-center justify-between">
                                         <Label htmlFor="password">Password</Label>
-                                        <span className="text-xs text-primary hover:underline cursor-pointer">Forgot password?</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => router.push("/forgot-password")}
+                                            className="text-xs text-primary hover:underline cursor-pointer bg-transparent border-none p-0"
+                                        >
+                                            Forgot password?
+                                        </button>
                                     </div>
                                     <Input
                                         id="password"

@@ -7,13 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, Command, CheckCircle2 } from "lucide-react"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 
 export default function SignupPage() {
     const router = useRouter()
@@ -50,7 +43,7 @@ export default function SignupPage() {
     return (
         <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
             {/* Left Side - Hero/Testimonial (Same as Login) */}
-            <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex overflow-hidden">
+            <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary via-blue-700 to-indigo-800" />
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80')] opacity-10 bg-cover bg-center mix-blend-overlay" />
 
@@ -142,18 +135,6 @@ export default function SignupPage() {
                                         />
                                         {error.city && <p className="text-xs text-destructive">{error.city[0]}</p>}
                                     </div>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="requestedRole">Account Type</Label>
-                                    <Select name="requestedRole" defaultValue="STUDENT">
-                                        <SelectTrigger className="h-10 bg-background/80">
-                                            <SelectValue placeholder="Select account type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="STUDENT">Student</SelectItem>
-                                            <SelectItem value="TEACHER">Teacher</SelectItem>
-                                        </SelectContent>
-                                    </Select>
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="password">Password</Label>

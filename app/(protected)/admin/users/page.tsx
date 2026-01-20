@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useTransition } from "react"
-import { getAllUsers, updateUserRole } from "@/app/actions/permissions"
+import { getAllUsers, updateUserRole, deleteUsers } from "@/app/actions/permissions"
 import { Role, Roles } from "@/types/role"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,7 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { Loader2, UserCog, Mail, MapPin, Phone, Shield } from "lucide-react"
+import { Loader2, UserCog, Mail, MapPin, Phone, Shield, Trash2 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 
@@ -52,6 +52,20 @@ export default function AdminUsersPage() {
                 fetchUsers()
             } else {
                 setMessage({ type: 'error', text: res.error || "Failed to update role" })
+            }
+        })
+    }
+
+    const handleDeleteUser = (userId: string) => {
+        if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return
+        setMessage(null)
+        startTransition(async () => {
+            const res = await deleteUsers([userId])
+            if (res.success) {
+                setMessage({ type: 'success', text: "User deleted successfully" })
+                fetchUsers()
+            } else {
+                setMessage({ type: 'error', text: res.error || "Failed to delete user" })
             }
         })
     }
@@ -116,21 +130,32 @@ export default function AdminUsersPage() {
                                 </TableCell>
                             )}
                             <TableCell className="text-right">
-                                <Select
-                                    defaultValue={user.role}
-                                    onValueChange={(value) => handleRoleChange(user.id, value as Role)}
-                                    disabled={isPending}
-                                >
-                                    <SelectTrigger className="w-[140px] ml-auto">
-                                        <SelectValue placeholder="Select role" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value={Roles.ADMIN}>Admin</SelectItem>
-                                        <SelectItem value={Roles.TEACHER}>Teacher</SelectItem>
-                                        <SelectItem value={Roles.STUDENT}>Student</SelectItem>
-                                        <SelectItem value={Roles.NONE}>None</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <div className="flex items-center justify-end gap-2">
+                                    <Select
+                                        defaultValue={user.role}
+                                        onValueChange={(value) => handleRoleChange(user.id, value as Role)}
+                                        disabled={isPending}
+                                    >
+                                        <SelectTrigger className="w-[140px]">
+                                            <SelectValue placeholder="Select role" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value={Roles.ADMIN}>Admin</SelectItem>
+                                            <SelectItem value={Roles.TEACHER}>Teacher</SelectItem>
+                                            <SelectItem value={Roles.STUDENT}>Student</SelectItem>
+                                            <SelectItem value={Roles.NONE}>None</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                        onClick={() => handleDeleteUser(user.id)}
+                                        disabled={isPending}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </TableCell>
                         </TableRow>
                     ))}

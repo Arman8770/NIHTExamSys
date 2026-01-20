@@ -1,72 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma-client"
+}
+
 datasource db {
   provider = "mysql"
 }
 
-generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
-}
-
 model User {
-  id          String @id @default(cuid())
-  name        String
-  email       String @unique
-  password    String
-  phoneNumber BigInt?
-  city        String?
-  role          Role      @default(STUDENT)
-  requestedRole String?   // For tracking what role the user signed up for (TEACHER | STUDENT)
+  id                 String           @id @default(cuid())
+  name               String
+  email              String           @unique
+  password           String
+  role               Role             @default(STUDENT)
+  city               String?
+  phoneNumber        BigInt?
+  requestedRole      String?
+  profileUpdateCount Int              @default(0)
+  batchId            String?
+  examsCreated       Exam[]           @relation("TeacherExams")
+  assignedExams      ExamAssignment[]
+  results            Result[]
+  batchesCreated     Batch[]          @relation("TeacherBatches")
+  assignedBatches    BatchAssignment[]
+  batch              Batch?           @relation("BatchStudents", fields: [batchId], references: [id])
 
-  examsCreated Exam[]   @relation("TeacherExams")
-  results      Result[]
-  assignedExams ExamAssignment[]
+  @@index([batchId], map: "User_batchId_fkey")
 }
 
 model Exam {
-  id          String   @id @default(cuid())
+  id          String           @id @default(cuid())
   title       String
   description String
-  timeLimit   Int // in minutes
+  timeLimit   Int
   teacherId   String
-  teacher     User     @relation("TeacherExams", fields: [teacherId], references: [id])
+  createdAt   DateTime         @default(now())
+  teacher     User             @relation("TeacherExams", fields: [teacherId], references: [id], onDelete: Cascade)
+  assignments ExamAssignment[]
   questions   Question[]
   results     Result[]
-  assignments ExamAssignment[]
-  createdAt   DateTime @default(now())
+  batches     Batch[]          @relation("BatchExams")
+
+  @@index([teacherId], map: "Exam_teacherId_fkey")
+}
+
+model Batch {
+  id          String            @id @default(cuid())
+  name        String            @unique
+  description String?
+  creatorId   String?
+  createdAt   DateTime          @default(now())
+  creator     User?             @relation("TeacherBatches", fields: [creatorId], references: [id], onDelete: SetNull)
+  students    User[]            @relation("BatchStudents")
+  exams       Exam[]            @relation("BatchExams")
+  assignments BatchAssignment[]
+
+  @@index([creatorId], map: "Batch_creatorId_fkey")
+}
+
+model BatchAssignment {
+  id         String   @id @default(cuid())
+  batchId    String
+  teacherId  String
+  assignedAt DateTime @default(now())
+  batch      Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  teacher    User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([batchId, teacherId])
+  @@index([teacherId], map: "BatchAssignment_teacherId_fkey")
 }
 
 model ExamAssignment {
-  id        String   @id @default(cuid())
-  examId    String
-  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
-  studentId String
-  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  examId     String
+  studentId  String
   assignedAt DateTime @default(now())
+  exam       Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  student    User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([examId, studentId])
+  @@index([studentId], map: "ExamAssignment_studentId_fkey")
 }
 
 model Question {
-  id               String @id @default(cuid())
-  examId           String
-  exam             Exam   @relation(fields: [examId], references: [id], onDelete: Cascade)
-  text             String
-  options          String // JSON string
+  id                 String @id @default(cuid())
+  examId             String
+  text               String
+  options            String
   correctAnswerIndex Int
+  exam               Exam   @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@index([examId], map: "Question_examId_fkey")
 }
 
 model Result {
-  id             String   @id @default(cuid())
-  studentId      String
-  student        User     @relation(fields: [studentId], references: [id])
-  examId         String
-  exam           Exam     @relation(fields: [examId], references: [id])
-  score          Int
-  completionTime Int // Time taken in seconds or minutes
-  teacherApproval Boolean @default(false)
-  adminApproval   Boolean @default(false)
-  responses       Json?    // Added to store student answers for review
-  createdAt      DateTime @default(now())
+  id              String   @id @default(cuid())
+  studentId       String
+  examId          String
+  score           Int
+  completionTime  Int
+  teacherApproval Boolean  @default(false)
+  adminApproval   Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  responses       Json?
+  exam            Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  student         User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([examId], map: "Result_examId_fkey")
+  @@index([studentId], map: "Result_studentId_fkey")
 }
 
 enum Role {
@@ -74,4 +115,13 @@ enum Role {
   TEACHER
   STUDENT
   NONE
+}
+
+model Otp {
+  id      String   @id @default(cuid())
+  email   String
+  otp     String
+  expires DateTime
+
+  @@index([email])
 }

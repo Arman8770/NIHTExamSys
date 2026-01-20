@@ -8,21 +8,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { PlusCircle, Edit } from "lucide-react"
 import { DeleteExamButton } from "@/components/DeleteExamButton"
 
+import { getExams } from "@/app/actions/exam"
 import { AssignExamModal } from "@/components/AssignExamModal"
 
 export default async function TeacherExamsPage() {
     const session = await auth()
-    if (session?.user?.role !== "TEACHER") redirect("/")
+    if (session?.user?.role !== "TEACHER" && session?.user?.role !== "ADMIN") redirect("/")
 
-    const exams = await prisma.exam.findMany({
-        where: { teacherId: session.user.id },
-        orderBy: { createdAt: 'desc' },
-        include: {
-            _count: {
-                select: { results: true }
-            }
-        }
-    })
+    const { exams = [], error } = await getExams() as { exams: any[], error?: string }
+
+    if (error) {
+        return <div className="p-8 text-center text-destructive">Error: {error}</div>
+    }
 
     return (
         <div className="container mx-auto px-4 py-8 space-y-8">
@@ -59,7 +56,7 @@ export default async function TeacherExamsPage() {
                                     <div className="space-y-1 flex-1">
                                         <div className="flex items-center gap-2">
                                             <h3 className="font-semibold text-lg">{exam.title}</h3>
-                                            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full dark:bg-blue-900/30 dark:text-blue-400">
+                                            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">
                                                 {exam.timeLimit}m
                                             </span>
                                         </div>

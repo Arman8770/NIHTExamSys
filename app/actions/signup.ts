@@ -14,13 +14,15 @@ const SignupSchema = z.object({
 })
 
 export async function signup(formData: FormData) {
+    const requestedRoleValue = (formData.get("requestedRole") as string) || "STUDENT"
+
     const validatedFields = SignupSchema.safeParse({
         name: formData.get("name"),
         email: formData.get("email"),
         password: formData.get("password"),
         phoneNumber: formData.get("phoneNumber"),
         city: formData.get("city"),
-        requestedRole: formData.get("requestedRole"),
+        requestedRole: requestedRoleValue,
     })
 
     if (!validatedFields.success) {
@@ -48,7 +50,7 @@ export async function signup(formData: FormData) {
                 phoneNumber: phoneNumber ? BigInt(phoneNumber) : null,
                 city,
                 role: "NONE",
-                requestedRole: requestedRole || "STUDENT",
+                requestedRole: requestedRole as string || "STUDENT",
             },
         })
 
